@@ -1,0 +1,14 @@
+*.sqlite
+*.sqlite-journal
+/vendor
+/.idea
+Homestead.json
+Homestead.yaml
+.env
+/public/.htaccess
+/.htaccess
+/html
+Dockerfile
+docker-compose.yaml
+/servidor/
+.env.example

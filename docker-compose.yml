@@ -1,0 +1,31 @@
+#version: '3.8'
+
+services:
+  db:
+    image: mysql:8.0.0
+    container_name: mysql_guincho
+    environment:
+      MYSQL_ROOT_PASSWORD: "${DB_PASSWORD}"
+      MYSQL_DATABASE: "${DB_DATABASE}"
+      MYSQL_USER: "${DB_USERNAME}"
+      MYSQL_PASSWORD: "${DB_PASSWORD}"
+    ports:
+      - "33063:3306"  # Mapeia a porta 3306 do contêiner para a porta 33063 no host
+    volumes:
+      - db_data:/var/lib/mysql
+    command: --default-authentication-plugin=mysql_native_password --explicit_defaults_for_timestamp --skip-name-resolve
+
+  laravel-guincho-app:
+    build: .
+    ports:
+      - "6001:80"
+    volumes:
+      - .:/usr/share/nginx
+    command: sh -c "/etc/init.d/php8.0-fpm restart && composer install && composer dump-autoload && nginx -g 'daemon off;'"      
+    env_file:
+      - .env
+    depends_on:
+      - db
+
+volumes:
+  db_data:
