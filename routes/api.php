@@ -22,7 +22,10 @@ Route::group(['prefix' => 'localizacao'], function(){
     // Route::get('/rotas', [RotasController::class, 'rotas'])->name('rotas');
     Route::post('/rotas', [RotasController::class, 'rotas'])->name('rotas');
 });
-
+Route::group(['prefix' => 'admin'], function(){
+    Route::post('/criptografia', [RotasController::class, 'criptografia'])->name('criptografia');
+    Route::get('/buscarDadosUsuario', [RotasController::class, 'buscarDadosUsuario'])->name('buscarDadosUsuario');
+});
 
 Route::get('/teste', function () {
     return phpInfo();
