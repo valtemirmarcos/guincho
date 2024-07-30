@@ -19,7 +19,7 @@ class CreateOperadorTable extends Migration
             $table->string('email', 200);
             $table->string('cpf', 20);
             $table->string('fone', 20);
-            $table->string('chave_maps', 50);
+            $table->string('chave_maps', 1000);
             $table->string('endereco_base', 100);
             $table->float('valor_km', 10,2);
             $table->float('minimo_km', 10,2);

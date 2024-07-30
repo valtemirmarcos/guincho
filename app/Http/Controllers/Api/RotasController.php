@@ -29,4 +29,24 @@ class RotasController extends Controller{
         }
 
     }
+    public function criptografia(Request $request) {
+        try {
+            $saida= $this->rotasRepositorio->criptografia($request);
+            return $this->responseSuccessJson($saida);
+        } catch (Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return $this->responseExceptionJson($e);
+        } catch (\Exception $exception) {
+            return $this->responseExceptionJson($exception);
+        }
+    }
+    public function buscarDadosUsuario(Request $request) {
+        try {
+            $saida= $this->rotasRepositorio->buscarDadosUsuario($request);
+            return $this->responseSuccessJson($saida);
+        } catch (Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return $this->responseExceptionJson($e);
+        } catch (\Exception $exception) {
+            return $this->responseExceptionJson($exception);
+        }
+    }
 }

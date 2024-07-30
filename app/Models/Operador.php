@@ -27,7 +27,8 @@ class Operador extends Model
         'endereco_base',
         'valor_km',
         'minimo_km',
-        'minimo_valor'
+        'minimo_valor',
+        'slug'
     ];
     protected $casts = [
         'valor_km' => 'float',
