@@ -6,7 +6,6 @@
 @endsection
 
 @section('conteudo')
-
     <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
         <h1 class="h3">Simulador</h1>
     </div>
@@ -35,8 +34,11 @@
                 <label for="cpf" class="form-label">CPF</label>
             </div>
             <div class="text-center">
-                <button type="button" id="bt-simular" class="btn btn-primary mt-5 text-center p-3 fs-2">
-                    <i class="bi bi-whatsapp"></i> Simular e Contactar Central
+                <button type="button" id="bt-simular" class="btn btn-success mt-5 text-center p-3 fs-2 me-3">
+                    <i class="bi bi-arrow-repeat"></i> Simular
+                </button>
+                <button type="button" id="bt-contactar" class="btn btn-primary mt-5 text-center p-3 fs-2">
+                    <i class="bi bi-whatsapp"></i> Contactar Central
                 </button>
             </div>
 
@@ -44,7 +46,12 @@
     </div>
 @endsection
 @section('js')
-    <script src="https://maps.googleapis.com/maps/api/js?key={{$chave}}&libraries=places"></script>
+    <script>
+        var slug = "{{$slug}}";
+        var urlApp = "{{$url}}";
+        // console.log(slug);
+    </script>
+    <script src="/api/localizacao/autocomplete?slug={{$slug}}"></script>
 
     <script src="{{asset('js/main.js')}}"></script>
 @endsection

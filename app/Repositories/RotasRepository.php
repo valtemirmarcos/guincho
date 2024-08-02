@@ -3,7 +3,9 @@
 namespace App\Repositories;
 
 use App\Models\Operador;
+use App\Models\Servico;
 use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\Http;
 
 use Exception;
 
@@ -25,6 +27,8 @@ class RotasRepository{
         $taxaGuinchoKm = $query->valor_km;
         $minimoKm =  $query->minimo_km;
         $minimoValor = $query->minimo_valor;
+        $idOperador = $query->id;
+        $foneOperador = $query->fone;
         if(!$query){
             throw new \Exception("Operador nao encontrado");
         }
@@ -43,6 +47,7 @@ class RotasRepository{
         if(!$request->has('fone')){
             throw new \Exception("Faltou incluir o Telefone");
         }
+        
         $validaFone = validarFone($request->input('fone'));
         if(!$validaFone){
             throw new \Exception("Telefone inválido!");
@@ -65,6 +70,8 @@ class RotasRepository{
           CURLOPT_FOLLOWLOCATION => true,
           CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
           CURLOPT_CUSTOMREQUEST => 'GET',
+          CURLOPT_SSL_VERIFYHOST => false,
+          CURLOPT_SSL_VERIFYPEER => false,
         ));
         
         $response = curl_exec($curl);
@@ -74,24 +81,42 @@ class RotasRepository{
         $data->taxa_guicho_km =  $taxaGuinchoKm;
         $data->minimo_km =  $minimoKm;
         $data->minimo_valor =  $minimoValor;
-        
+        $data->id_operador = $idOperador;
+        $data->foneOperador = $foneOperador;
         return $data;
 
     }
     public function rotas($request)
+    {
+
+        $cotacao = $this->cotacaoServico($request);
+        $valorTotal = $cotacao["valorTotal"];
+        $foneOperador = $cotacao["foneOperador"];
+        unset($cotacao["foneOperador"], $cotacao["valorTotal"]);
+        $insert = Servico::insert($cotacao);
+        if(!$insert){
+            throw new \Exception("Dados do serviço não foram processados");
+        }
+        $cotacao["foneOperador"] = $foneOperador;
+        $cotacao["valorTotal"] = $valorTotal;
+
+        return $cotacao;
+    }
+    public function cotacaoServico($request)
     {
         $dadosRotas = $this->dadosRotas($request);
 
         $jsonDados = [
             'origem' => $dadosRotas->origin_addresses[0],
             'destino' => $dadosRotas->destination_addresses[0],
-            'lblkm' => $dadosRotas->rows[0]->elements[0]->distance->text,
+            'txt_km' => $dadosRotas->rows[0]->elements[0]->distance->text,
             'kms' => $dadosRotas->rows[0]->elements[0]->distance->value/1000,
             'kms_ida_volta' => ($dadosRotas->rows[0]->elements[0]->distance->value/1000)*2,
             'taxa_computacional_km' => $dadosRotas->taxa_computacional_km,
             'taxa_guicho_km' => $dadosRotas->taxa_guicho_km,
             'minimo_km' => $dadosRotas->minimo_km,
             'minimo_valor' => $dadosRotas->minimo_valor,
+            'id_operador' => $dadosRotas->id_operador,
         ];
         $valorGuincho = 0;
         if($jsonDados['kms_ida_volta']<=$jsonDados['minimo_km']){
@@ -101,9 +126,13 @@ class RotasRepository{
         $valorGuincho = $jsonDados['minimo_valor']+($jsonDados['kms_ida_volta']*$jsonDados['taxa_guicho_km']);
         $jsonDados['valorTaxaComputacional'] = $jsonDados['kms_ida_volta']*$jsonDados['taxa_computacional_km'];
         $jsonDados['valorGuincho'] = $valorGuincho;
-        $jsonDados['valorTotal'] = $jsonDados['valorTaxaComputacional']+$jsonDados['valorGuincho'];
         $jsonDados['cpf'] = $request->input('cpf');
-        $jsonDados['fone'] = $request->input('fone');
+        $jsonDados['fone'] = gravaFone($request->input('fone'));
+        $jsonDados['created_at'] = horarioBrasilia();
+        $jsonDados['updated_at'] = horarioBrasilia();
+        $jsonDados['valorTotal'] = $jsonDados['valorTaxaComputacional']+$jsonDados['valorGuincho'];
+        $jsonDados['foneOperador'] = $dadosRotas->foneOperador;
+
         return $jsonDados;
     }
     public function criptografia($request)
@@ -125,7 +154,63 @@ class RotasRepository{
         }
         // $query = Operador::where('id',$request->input('operador'))->with('taxa')->first();
         $query = Operador::where('slug',$request->input('slug'))->first();
-        $query->chaveReal = Crypt::decryptString($query->chave_maps);
         return $query;
+    }
+    public function buscarEnderecoCoordenada($request)
+    {
+        if(!$request->has('latitude')){
+            throw new \Exception("Latitude nao encontrada");
+        }
+        if(!$request->has('longitude')){
+            throw new \Exception("Longitude nao encontrada");
+        }
+
+        $dadosGuincheiro = $this->buscarDadosUsuario($request);
+        $dadosBusca = [
+            'apiKey' => Crypt::decryptString($dadosGuincheiro->chave_maps),
+            'latitude' => $request->input('latitude'),
+            'longitude' => $request->input('longitude')
+        ];
+        $api = $this->apiBuscarCoordenada($dadosBusca);
+
+        if(!isset($api->results[0]->formatted_address)){
+            throw new \Exception("Endereço não encontrado!");
+        }
+        return $api->results[0]->formatted_address;
+    }
+    public function apiBuscarCoordenada($dadosApi)
+    {
+        $latlong = $dadosApi["latitude"].",".$dadosApi["longitude"];
+        $curl = curl_init();
+
+        curl_setopt_array($curl, array(
+            CURLOPT_URL => "https://maps.googleapis.com/maps/api/geocode/json?latlng={$latlong}&key={$dadosApi['apiKey']}",
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_ENCODING => '',
+            CURLOPT_MAXREDIRS => 10,
+            CURLOPT_TIMEOUT => 0,
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+            CURLOPT_CUSTOMREQUEST => 'GET',
+            CURLOPT_SSL_VERIFYHOST => false,
+            CURLOPT_SSL_VERIFYPEER => false,
+        ));
+
+        $response = curl_exec($curl);
+
+        curl_close($curl);
+        return json_decode($response);
+    }
+    public function autocomplete($request)
+    {
+        $dadosGuincheiro = $this->buscarDadosUsuario($request);
+
+        $key = Crypt::decryptString($dadosGuincheiro->chave_maps);
+        $response = Http::get('https://maps.googleapis.com/maps/api/js', [
+            'key' => $key,
+            'libraries' => 'places',
+        ]);
+    
+        return $response->body();
     }
 }

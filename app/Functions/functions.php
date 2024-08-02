@@ -183,6 +183,8 @@ if( !function_exists('validarCPF')){
 }
 if( !function_exists('validarFone')){
     function validarFone($telefone) {
+        $telefone = filter_var($telefone, FILTER_SANITIZE_NUMBER_INT);
+        $telefone = "+55".$telefone;
         // Remover espaços, hífens e parênteses do número
         $telefone = preg_replace('/\s+|-|\(|\)/', '', $telefone);
 
@@ -196,5 +198,19 @@ if( !function_exists('validarFone')){
         } else {
             return false;
         }
+    }
+}
+if( !function_exists('gravaFone')){
+    function gravaFone($telefone){
+        // $telefone = filter_var($telefone, FILTER_SANITIZE_NUMBER_INT);
+        $telefone = preg_replace('/\D/', '', $telefone);
+        $telefone = "+55".$telefone;
+        return $telefone;
+    }
+}
+if( !function_exists('horarioBrasilia')){
+    function horarioBrasilia(){
+        $currentDateTime = Carbon::now('America/Sao_Paulo');
+        return $currentDateTime->toDateTimeString();
     }
 }

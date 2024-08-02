@@ -14,12 +14,12 @@ $(document).on('click',"#geolocalizacao",(evt)=>{
                     if (permission === "granted") {
                         console.log("Permissão concedida!");
                         // Crie uma notificação aqui
-                        new Notification('Acessar localizacao', {
-                            body: 'notificação consedida',
-                            icon: 'caminho/para/sua/imagem.png'
-                        });
+                        // new Notification('Acessar localizacao', {
+                        //     body: 'notificação consedida',
+                        //     icon: 'caminho/para/sua/imagem.png'
+                        // });
                     } else {
-                        console.log('Permissão negada.');
+                        console.error('Permissão negada.');
                     }
                 });
         } else {
@@ -32,7 +32,8 @@ $(document).on('click',"#geolocalizacao",(evt)=>{
     function showPosition(position) {
         var latitude = position.coords.latitude;
         var longitude = position.coords.longitude;
-        alert("Latitude: " + latitude + "<br>Longitude: " + longitude);
+        gerarEndereco(latitude, longitude);
+        // alert("Latitude: " + latitude + "<br>Longitude: " + longitude);
     
         // // Exibir mapa com localização
         // var mapUrl = "https://www.google.com/maps?q=" + latitude + "," + longitude + "&z=15&output=embed";
@@ -55,7 +56,85 @@ $(document).on('click',"#geolocalizacao",(evt)=>{
         }
     }
 });
+$(document).on('click',"#bt-simular",(evt) =>{
+    console.log("clicou");
+    evt.preventDefault();
+    evt.stopPropagation();
+    var jsonEntrada = {
+        "slug":slug,
+        "cpf":$("#cpf").val(),
+        "destinations":$("#autocomplete").val(),
+        "fone":$("#telefone").val()
+    }
+});
+$(document).on('click',"#bt-contactar",(evt) =>{
+    console.log("clicou");
+    evt.preventDefault();
+    evt.stopPropagation();
+    var jsonEntrada = {
+        "slug":slug,
+        "cpf":$("#cpf").val(),
+        "destinations":$("#autocomplete").val(),
+        "fone":$("#telefone").val()
+    }
+    console.log(jsonEntrada);
+    $.ajax({
+        url: urlApp + '/api/localizacao/rotas',
+        type: 'post',
+        dataType: "json",
+        data:JSON.stringify(jsonEntrada),
+        contentType: "application/json; charset=iso-8859-1",
+        success: function (result) {
+            if(result.status!='success'){
+                alert(result.message);
+                console.log(result);
+                return false;
+            }
+            // var resposta = result.data;
+            // var phoneNumber = "55"+resposta.foneOperador; // Número no formato internacional, sem espaços ou sinais
+            // var mensagem = "Olá, "
+            // var message = encodeURIComponent('Olá, gostaria de mais informações.');
 
+            // var whatsappUrl = 'https://wa.me/' + phoneNumber + '?text=' + message;
+            // window.location.href = whatsappUrl; // Abre na mesma aba
+            console.log(result.data);
+
+        },
+        error: function (error) {
+            console.log(JSON.stringify(error));
+        }
+        
+    });
+
+});
+function gerarEndereco(latitude, longitude){
+    var jsonDados = {
+        'slug':slug,
+        'latitude':latitude,
+        'longitude':longitude
+    }
+    $.ajax({
+        url: urlApp + '/api/localizacao/buscarEnderecoCoordenada',
+        type: 'post',
+        dataType: "json",
+        data:JSON.stringify(jsonDados),
+        contentType: "application/json; charset=iso-8859-1",
+        success: function (result) {
+            if(result.status!='success'){
+                alert("Endereço nao localizado")
+                return false;
+            }
+            $("#autocomplete").val(result.data);
+            console.log(result.data);
+
+        },
+        error: function (error) {
+            console.log(JSON.stringify(error));
+        }
+        
+    });
+    console.log(urlApp);
+}
 function initAutocomplete() {
     const autocomplete = new google.maps.places.Autocomplete(
       document.getElementById('autocomplete'),

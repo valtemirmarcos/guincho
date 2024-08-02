@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Crypt;
 
 class BnpController extends Controller{
         /**
@@ -17,11 +18,11 @@ class BnpController extends Controller{
     }
     public function inicio(Request $request)
     {
-        $segment = $request->segment(1);
-        $dadosUsuarios = $this->dadosUsuario($segment);
-        $chave = $dadosUsuarios['data']['chaveReal'];
+        
+        $slug = $request->segment(1);
+        $arUrl = explode("/".$slug,$request->url());
 
-        return view('main',['chave' => $chave]);
+        return view('main',['slug' => $slug, 'url'=>$arUrl[0] ]);
     }
     public function dadosUsuario($slug)
     {
