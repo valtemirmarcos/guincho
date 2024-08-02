@@ -21,6 +21,9 @@ use App\Http\Controllers\Api\RotasController;
 Route::group(['prefix' => 'localizacao'], function(){
     // Route::get('/rotas', [RotasController::class, 'rotas'])->name('rotas');
     Route::post('/rotas', [RotasController::class, 'rotas'])->name('rotas');
+    Route::post('/cotacao', [RotasController::class, 'cotacao'])->name('cotacao');
+    Route::post('/buscarEnderecoCoordenada', [RotasController::class, 'buscarEnderecoCoordenada'])->name('buscarEnderecoCoordenada');
+    Route::get('/autocomplete', [RotasController::class, 'autocomplete'])->name('autocomplete');
 });
 Route::group(['prefix' => 'admin'], function(){
     Route::post('/criptografia', [RotasController::class, 'criptografia'])->name('criptografia');
