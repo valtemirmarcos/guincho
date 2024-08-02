@@ -13,6 +13,17 @@
 
     <title>@yield('title')</title>
     @yield('css')
+    <style>
+        body, html {
+            height: 100%;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+        }
+        .content {
+            flex: 1;
+        }
+    </style>
 </head>
 <body>
     
@@ -23,15 +34,15 @@
         </div>
     </header>
 
-    <div class="container-fluid vh-100 d-flex flex-column">
-        <div class="row">
+    <div class="container-fluid content d-flex flex-column mb-3">
+        <div class="row flex-grow-1">
 
             <!-- Conteúdo -->
             <nav class="col-md-9 ms-sm-auto col-lg-10 px-md-4 text-center mt-3 mb-2">
                 <img src="{{asset('images/guinchobnp.png')}}" class="text-center" style="width:200px"/>
             </nav>
         </div>
-        <div class="row">
+        <div class="row flex-grow-1">
 
             <!-- Conteúdo -->
             <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
@@ -41,7 +52,7 @@
     </div>
 
     <!-- Rodapé -->
-    <footer class="bg-secondary text-white text-center p-3 mt-4">
+    <footer class="bg-secondary text-white text-center p-3">
         <div class="container">
             <p class="mb-0">© {{date('Y')}} Todos os direitos reservados.</p>
         </div>

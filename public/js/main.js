@@ -66,6 +66,31 @@ $(document).on('click',"#bt-simular",(evt) =>{
         "destinations":$("#autocomplete").val(),
         "fone":$("#telefone").val()
     }
+    $.ajax({
+        url: urlApp + '/api/localizacao/cotacao',
+        type: 'post',
+        dataType: "json",
+        data:JSON.stringify(jsonEntrada),
+        contentType: "application/json; charset=iso-8859-1",
+        success: function (result) {
+            if(result.status!='success'){
+                alert(result.message);
+                console.log(result);
+                return false;
+            }
+            var resposta = result.data;
+            var descricao='<h4 class="text-center"><b>Resultado da Simulação</b></h4>';
+                descricao += '<p class="ms-2"><span>Distância Percorrida: <b>'+formataMoeda(resposta.kms_ida_volta,2)+' kms</b></span></p>';
+                descricao += '<p class="ms-2"><span>Custo frete: <b>R$ '+formataMoeda(resposta.valorTotal,2)+'</b></span></p>';
+            $("#descricao").html(descricao);
+            console.log(result.data);
+
+        },
+        error: function (error) {
+            console.log(JSON.stringify(error));
+        }
+        
+    });
 });
 $(document).on('click',"#bt-contactar",(evt) =>{
     console.log("clicou");
@@ -90,13 +115,18 @@ $(document).on('click',"#bt-contactar",(evt) =>{
                 console.log(result);
                 return false;
             }
-            // var resposta = result.data;
-            // var phoneNumber = "55"+resposta.foneOperador; // Número no formato internacional, sem espaços ou sinais
-            // var mensagem = "Olá, "
-            // var message = encodeURIComponent('Olá, gostaria de mais informações.');
+            var resposta = result.data;
+            var phoneNumber = "55" + resposta.foneOperador; // Número no formato internacional, sem espaços ou sinais
+    
+            var mensagem = "Olá, fiz uma simulação";
+            mensagem += " Local da retirada: " + resposta.destino + "";
+            mensagem += " Distância: *" + formataMoeda(resposta.kms_ida_volta, 2) + " kms*";
+            mensagem += " no valor de: *R$ " + formataMoeda(resposta.valorTotal, 2) + "*";
+    
+            var message = encodeURIComponent(mensagem);
 
-            // var whatsappUrl = 'https://wa.me/' + phoneNumber + '?text=' + message;
-            // window.location.href = whatsappUrl; // Abre na mesma aba
+            var whatsappUrl = 'https://wa.me/' + phoneNumber + '?text=' + message;
+            window.location.href = whatsappUrl; // Abre na mesma aba
             console.log(result.data);
 
         },
@@ -148,4 +178,8 @@ function initAutocomplete() {
       // Faça algo com as informações do lugar, como exibir o endereço completo
       console.log(place);
     });
-  }
+}
+function formataMoeda(valor, casasDecimais) {
+    valor = valor==null ? 0:valor;
+        return parseFloat(valor).toLocaleString('pt-BR', { maximumFractionDigits: casasDecimais, minimumFractionDigits: casasDecimais });
+}
