@@ -20,16 +20,18 @@ class BnpController extends Controller{
     {
         
         $slug = $request->segment(1);
-        $arUrl = explode("/".$slug,$request->url());
+        // $arUrl = explode("/".$slug,$request->url());
+        $url = env('URL_SISTEMA');
+        // dd($url, $slug);
 
-        return view('main',['slug' => $slug, 'url'=>$arUrl[0] ]);
+        return view('main',['slug' => $slug, 'url'=>$url ]);
     }
     public function dadosUsuario($slug)
     {
         $curl = curl_init();
     
         curl_setopt_array($curl, array(
-            CURLOPT_URL => env('URL_API').'/admin/buscarDadosUsuario?slug=' . $slug,
+            CURLOPT_URL => env('URL_SISTEMA').'/api/admin/buscarDadosUsuario?slug=' . $slug,
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_ENCODING => '',
             CURLOPT_MAXREDIRS => 10,
