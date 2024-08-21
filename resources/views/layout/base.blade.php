@@ -39,8 +39,15 @@
 
             <!-- Conteúdo -->
             <nav class="col-md-9 ms-sm-auto col-lg-10 px-md-4 text-center mt-3 mb-2">
-                <img src="{{asset('images/guinchobnp.png')}}" class="text-center" style="width:200px"/>
+                <div class="loading-container">
+                    <img src="{{asset('images/guinchobnp.png')}}" class="text-center" style="width:200px"/>
+                    <br/>
+                    <div id="loader"  class="spinner-border mt-3 text-primary d-none" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
             </nav>
+
         </div>
         <div class="row flex-grow-1">
 

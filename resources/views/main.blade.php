@@ -34,6 +34,7 @@
                 <label for="cpf" class="form-label">CPF</label>
             </div>
             <div id="descricao" class="mt-2"></div>
+
             <div class="text-center">
                 <button type="button" id="bt-simular" class="btn btn-success mt-5 text-center p-3 fs-2 me-3">
                     <i class="bi bi-arrow-repeat"></i> Simular
