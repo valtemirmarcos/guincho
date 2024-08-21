@@ -4,6 +4,7 @@ namespace App\Repositories;
 
 use App\Models\Operador;
 use App\Models\Servico;
+use App\Models\Simulacao;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Http;
 
@@ -94,6 +95,22 @@ class RotasRepository{
         $foneOperador = $cotacao["foneOperador"];
         unset($cotacao["foneOperador"], $cotacao["valorTotal"]);
         $insert = Servico::insert($cotacao);
+        if(!$insert){
+            throw new \Exception("Dados do serviço não foram processados");
+        }
+        $cotacao["foneOperador"] = $foneOperador;
+        $cotacao["valorTotal"] = $valorTotal;
+
+        return $cotacao;
+    }
+    public function simular($request)
+    {
+
+        $cotacao = $this->cotacaoServico($request);
+        $valorTotal = $cotacao["valorTotal"];
+        $foneOperador = $cotacao["foneOperador"];
+        unset($cotacao["foneOperador"], $cotacao["valorTotal"]);
+        $insert = Simulacao::insert($cotacao);
         if(!$insert){
             throw new \Exception("Dados do serviço não foram processados");
         }

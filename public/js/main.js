@@ -72,6 +72,9 @@ $(document).on('click',"#bt-simular",(evt) =>{
         dataType: "json",
         data:JSON.stringify(jsonEntrada),
         contentType: "application/json; charset=iso-8859-1",
+        beforeSend: function() {
+            $("#loader").removeClass("d-none");
+        },
         success: function (result) {
             if(result.status!='success'){
                 alert(result.message);
@@ -84,9 +87,13 @@ $(document).on('click',"#bt-simular",(evt) =>{
                 descricao += '<p class="ms-2"><span>Custo frete: <b>R$ '+formataMoeda(resposta.valorTotal,2)+'</b></span></p>';
             $("#descricao").html(descricao);
             console.log(result.data);
-
+            simular();
+        },
+        complete: function() {
+            $("#loader").addClass("d-none");
         },
         error: function (error) {
+            $("#loader").addClass("d-none");
             console.log(JSON.stringify(error));
         }
         
@@ -109,6 +116,9 @@ $(document).on('click',"#bt-contactar",(evt) =>{
         dataType: "json",
         data:JSON.stringify(jsonEntrada),
         contentType: "application/json; charset=iso-8859-1",
+        beforeSend: function() {
+            $("#loader").removeClass("d-none");
+        },
         success: function (result) {
             if(result.status!='success'){
                 alert(result.message);
@@ -130,7 +140,11 @@ $(document).on('click',"#bt-contactar",(evt) =>{
             console.log(result.data);
 
         },
+        complete: function() {
+            $("#loader").addClass("d-none");
+        },
         error: function (error) {
+            $("#loader").addClass("d-none");
             console.log(JSON.stringify(error));
         }
         
@@ -149,6 +163,9 @@ function gerarEndereco(latitude, longitude){
         dataType: "json",
         data:JSON.stringify(jsonDados),
         contentType: "application/json; charset=iso-8859-1",
+        beforeSend: function() {
+            $("#loader").removeClass("d-none");
+        },
         success: function (result) {
             if(result.status!='success'){
                 alert("Endereço nao localizado")
@@ -158,7 +175,11 @@ function gerarEndereco(latitude, longitude){
             console.log(result.data);
 
         },
+        complete: function() {
+            $("#loader").addClass("d-none");
+        },
         error: function (error) {
+            $("#loader").addClass("d-none");
             console.log(JSON.stringify(error));
         }
         
@@ -182,4 +203,34 @@ function initAutocomplete() {
 function formataMoeda(valor, casasDecimais) {
     valor = valor==null ? 0:valor;
         return parseFloat(valor).toLocaleString('pt-BR', { maximumFractionDigits: casasDecimais, minimumFractionDigits: casasDecimais });
+}
+function simular(){
+    var jsonEntrada = {
+        "slug":slug,
+        "cpf":$("#cpf").val(),
+        "destinations":$("#autocomplete").val(),
+        "fone":$("#telefone").val()
+    }
+    console.log(jsonEntrada);
+    $.ajax({
+        url: urlApp + '/api/localizacao/simular',
+        type: 'post',
+        dataType: "json",
+        data:JSON.stringify(jsonEntrada),
+        contentType: "application/json; charset=iso-8859-1",
+        success: function (result) {
+            if(result.status!='success'){
+                alert(result.message);
+                console.log(result);
+                return false;
+            }
+            var resposta = result.data;
+            console.log(resposta);
+            
+        },
+        error: function (error) {
+            console.log(JSON.stringify(error));
+        }
+        
+    });
 }
