@@ -1,7 +1,8 @@
 $(() => {
     $("#cpf").mask('000.000.000-00');
     $("#telefone").mask('(00) 00000-0000');
-    initAutocomplete();
+    initAutocomplete('autocomplete');
+    initAutocomplete('autocompleteDestino');
 });
 $(document).on('click',"#geolocalizacao",(evt)=>{
     console.log("clicou");
@@ -63,9 +64,11 @@ $(document).on('click',"#bt-simular",(evt) =>{
     var jsonEntrada = {
         "slug":slug,
         "cpf":$("#cpf").val(),
-        "destinations":$("#autocomplete").val(),
+        "pontoInicial":$("#autocomplete").val(),
+        "pontoFinal":$("#autocompleteDestino").val(),
         "fone":$("#telefone").val()
     }
+    console.log(jsonEntrada);
     $.ajax({
         url: urlApp + '/api/localizacao/cotacao',
         type: 'post',
@@ -106,7 +109,8 @@ $(document).on('click',"#bt-contactar",(evt) =>{
     var jsonEntrada = {
         "slug":slug,
         "cpf":$("#cpf").val(),
-        "destinations":$("#autocomplete").val(),
+        "pontoInicial":$("#autocomplete").val(),
+        "pontoFinal":$("#autocompleteDestino").val(),
         "fone":$("#telefone").val()
     }
     console.log(jsonEntrada);
@@ -129,9 +133,20 @@ $(document).on('click',"#bt-contactar",(evt) =>{
             var phoneNumber = "55" + resposta.foneOperador; // Número no formato internacional, sem espaços ou sinais
     
             var mensagem = "Olá, fiz uma simulação";
-            mensagem += " Local da retirada: " + resposta.destino + "";
-            mensagem += " Distância: *" + formataMoeda(resposta.kms_ida_volta, 2) + " kms*";
-            mensagem += " no valor de: *R$ " + formataMoeda(resposta.valorTotal, 2) + "*";
+
+            // Cria a URL do Google Maps para o trajeto entre origem e destino
+            var urlGoogleMaps = "https://www.google.com/maps/dir/?api=1";
+            urlGoogleMaps += "&origin=" + encodeURIComponent(resposta.base);
+            urlGoogleMaps += "&destination=" + encodeURIComponent(resposta.origem);
+            
+            mensagem += "\nLocal da retirada: " + resposta.origem + "";
+            mensagem += "\nLocal de destino: " + resposta.destino + "";
+            mensagem += "\nDistância: *" + formataMoeda(resposta.kms_ida_volta, 2) + " kms*";
+            mensagem += "\nno valor de: *R$ " + formataMoeda(resposta.valorTotal, 2) + "*";
+            
+            // Adiciona o link do trajeto no Google Maps
+            mensagem += "\nVeja o trajeto no Google Maps: [clique aqui](" + urlGoogleMaps + ")";
+
     
             var message = encodeURIComponent(mensagem);
 
@@ -186,9 +201,9 @@ function gerarEndereco(latitude, longitude){
     });
     console.log(urlApp);
 }
-function initAutocomplete() {
+function initAutocomplete(campo) {
     const autocomplete = new google.maps.places.Autocomplete(
-      document.getElementById('autocomplete'),
+      document.getElementById(campo),
       { types: ['geocode'] }
     );
   
@@ -208,7 +223,8 @@ function simular(){
     var jsonEntrada = {
         "slug":slug,
         "cpf":$("#cpf").val(),
-        "destinations":$("#autocomplete").val(),
+        "pontoInicial":$("#autocomplete").val(),
+        "pontoFinal":$("#autocompleteDestino").val(),
         "fone":$("#telefone").val()
     }
     console.log(jsonEntrada);

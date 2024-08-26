@@ -35,8 +35,11 @@ class RotasRepository{
         }
         $base = $query->endereco_base;
 
-        if(!$request->has('destinations')){
-            throw new \Exception("Faltou escolher a destino!");
+        if(!$request->has('pontoInicial')){
+            throw new \Exception("Faltou escolher a origem!");
+        }
+        if(!$request->has('pontoFinal')){
+            throw new \Exception("Faltou escolher destino!");
         }
         if(!$request->has('cpf')){
             throw new \Exception("Faltou incluir o CPF");
@@ -48,22 +51,41 @@ class RotasRepository{
         if(!$request->has('fone')){
             throw new \Exception("Faltou incluir o Telefone");
         }
-        
+
         $validaFone = validarFone($request->input('fone'));
         if(!$validaFone){
             throw new \Exception("Telefone inválido!");
         }
-        $origem = urlencode($base);
-        $destino = urlencode($request->input('destinations'));
+        $data = new \stdClass();
+        $baseGuincho = urlencode($base);
+        $origem = urlencode($request->input('pontoInicial'));
+        $destino = urlencode($request->input('pontoFinal'));
         $apiKey = $query->chave_maps;
         // $encryptedApiKey = Crypt::encryptString($apiKey);
         $decryptedApiKey = Crypt::decryptString($apiKey);
 
+        $pontoAB = $this->calculaRotAS($baseGuincho, $origem, $decryptedApiKey);
+        $pontoBC = $this->calculaRotAS($origem, $destino, $decryptedApiKey);
+        $pontoCA = $this->calculaRotAS($destino, $baseGuincho, $decryptedApiKey);
+        // return $pontaAB;
+        $data->pontoAB = $pontoAB;
+        $data->pontoBC = $pontoBC;
+        $data->pontoCA = $pontoCA;
+        $data->taxa_computacional_km = $taxaComputacional;
+        $data->taxa_guicho_km =  $taxaGuinchoKm;
+        $data->minimo_km =  $minimoKm;
+        $data->minimo_valor =  $minimoValor;
+        $data->id_operador = $idOperador;
+        $data->foneOperador = $foneOperador;
+        return $data;
 
+    }
+    public function calculaRotAS($origem, $destino, $chaveApi)
+    {
         $curl = curl_init();
 
         curl_setopt_array($curl, array(
-          CURLOPT_URL => "https://maps.googleapis.com/maps/api/distancematrix/json?origins={$origem}&destinations={$destino}&key={$decryptedApiKey}",
+          CURLOPT_URL => "https://maps.googleapis.com/maps/api/distancematrix/json?origins={$origem}&destinations={$destino}&key={$chaveApi}",
           CURLOPT_RETURNTRANSFER => true,
           CURLOPT_ENCODING => '',
           CURLOPT_MAXREDIRS => 10,
@@ -78,14 +100,7 @@ class RotasRepository{
         $response = curl_exec($curl);
         curl_close($curl);
         $data = json_decode($response);
-        $data->taxa_computacional_km = $taxaComputacional;
-        $data->taxa_guicho_km =  $taxaGuinchoKm;
-        $data->minimo_km =  $minimoKm;
-        $data->minimo_valor =  $minimoValor;
-        $data->id_operador = $idOperador;
-        $data->foneOperador = $foneOperador;
         return $data;
-
     }
     public function rotas($request)
     {
@@ -93,13 +108,15 @@ class RotasRepository{
         $cotacao = $this->cotacaoServico($request);
         $valorTotal = $cotacao["valorTotal"];
         $foneOperador = $cotacao["foneOperador"];
-        unset($cotacao["foneOperador"], $cotacao["valorTotal"]);
+        $base = $cotacao["base"];
+        unset($cotacao["foneOperador"], $cotacao["valorTotal"], $cotacao["base"]);
         $insert = Servico::insert($cotacao);
         if(!$insert){
             throw new \Exception("Dados do serviço não foram processados");
         }
         $cotacao["foneOperador"] = $foneOperador;
         $cotacao["valorTotal"] = $valorTotal;
+        $cotacao["base"] = $base;
 
         return $cotacao;
     }
@@ -109,13 +126,15 @@ class RotasRepository{
         $cotacao = $this->cotacaoServico($request);
         $valorTotal = $cotacao["valorTotal"];
         $foneOperador = $cotacao["foneOperador"];
-        unset($cotacao["foneOperador"], $cotacao["valorTotal"]);
+        $base = $cotacao["base"];
+        unset($cotacao["foneOperador"], $cotacao["valorTotal"], $cotacao["base"]);
         $insert = Simulacao::insert($cotacao);
         if(!$insert){
             throw new \Exception("Dados do serviço não foram processados");
         }
         $cotacao["foneOperador"] = $foneOperador;
         $cotacao["valorTotal"] = $valorTotal;
+        $cotacao["base"] = $base;
 
         return $cotacao;
     }
@@ -123,18 +142,27 @@ class RotasRepository{
     {
         $dadosRotas = $this->dadosRotas($request);
 
+        $origem = $request->input('pontoInicial');
+        $destino = $request->input('pontoFinal');
+        $kms_pontoAB = $dadosRotas->pontoAB->rows[0]->elements[0]->distance->value/1000;
+        $kms_pontoBC = $dadosRotas->pontoBC->rows[0]->elements[0]->distance->value/1000;
+        $kms_pontoCA = $dadosRotas->pontoCA->rows[0]->elements[0]->distance->value/1000;
+        $total_kms = round($kms_pontoAB+$kms_pontoBC+$kms_pontoCA, 2);
+
         $jsonDados = [
-            'origem' => $dadosRotas->origin_addresses[0],
-            'destino' => $dadosRotas->destination_addresses[0],
-            'txt_km' => $dadosRotas->rows[0]->elements[0]->distance->text,
-            'kms' => $dadosRotas->rows[0]->elements[0]->distance->value/1000,
-            'kms_ida_volta' => ($dadosRotas->rows[0]->elements[0]->distance->value/1000)*2,
+            'base' => $dadosRotas->pontoAB->origin_addresses[0],
+            'origem' => $origem,
+            'destino' => $destino,
+            'txt_km' => $total_kms." km(s)",
+            'kms' => $total_kms,
+            'kms_ida_volta' => $total_kms,
             'taxa_computacional_km' => $dadosRotas->taxa_computacional_km,
             'taxa_guicho_km' => $dadosRotas->taxa_guicho_km,
             'minimo_km' => $dadosRotas->minimo_km,
             'minimo_valor' => $dadosRotas->minimo_valor,
             'id_operador' => $dadosRotas->id_operador,
         ];
+
         $valorGuincho = 0;
         if($jsonDados['kms_ida_volta']<=$jsonDados['minimo_km']){
             $valorGuincho = $jsonDados['minimo_valor'];
@@ -142,12 +170,12 @@ class RotasRepository{
         // $valorGuichokm = 
         $valorGuincho = $jsonDados['minimo_valor']+($jsonDados['kms_ida_volta']*$jsonDados['taxa_guicho_km']);
         $jsonDados['valorTaxaComputacional'] = $jsonDados['kms_ida_volta']*$jsonDados['taxa_computacional_km'];
-        $jsonDados['valorGuincho'] = $valorGuincho;
+        $jsonDados['valorGuincho'] = round($valorGuincho,2);
         $jsonDados['cpf'] = $request->input('cpf');
         $jsonDados['fone'] = gravaFone($request->input('fone'));
         $jsonDados['created_at'] = horarioBrasilia();
         $jsonDados['updated_at'] = horarioBrasilia();
-        $jsonDados['valorTotal'] = $jsonDados['valorTaxaComputacional']+$jsonDados['valorGuincho'];
+        $jsonDados['valorTotal'] = round($jsonDados['valorTaxaComputacional']+$jsonDados['valorGuincho'],2);
         $jsonDados['foneOperador'] = $dadosRotas->foneOperador;
 
         return $jsonDados;
