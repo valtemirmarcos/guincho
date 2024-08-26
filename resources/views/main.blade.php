@@ -25,6 +25,14 @@
                     </button>
                 </div>
             </div>
+            <div class="row">
+                <div class="col-12">
+                    <div class="form-floating mb-3">
+                        <input type="text" name="autocompleteDestino" id="autocompleteDestino" class="form-control" placeholder=" ">
+                        <label for="autocompleteDestino" class="form-label">Digite o seu destino</label>
+                    </div>
+                </div>
+            </div>
             <div class="form-floating mb-3">
                 <input type="text" name="telefone" id="telefone" class="form-control" placeholder=" ">
                 <label for="telefone" class="form-label">Telefone</label>
@@ -40,7 +48,7 @@
                     <i class="bi bi-arrow-repeat"></i> Simular
                 </button>
                 <button type="button" id="bt-contactar" class="btn btn-primary mt-5 text-center p-3 fs-2">
-                    <i class="bi bi-whatsapp"></i> Contactar
+                    <i class="bi bi-whatsapp"></i> Contato
                 </button>
             </div>
 
